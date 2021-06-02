@@ -1,0 +1,223 @@
+
+import matplotlib.pyplot as plt
+
+from scipy.constants import c           
+from scipy.constants import Planck 
+from scipy.constants import G
+from scipy.constants import pi
+from scipy.constants import k
+from scipy.constants import sigma
+from scipy.constants import hbar
+from scipy.constants import h
+
+import numpy as np
+
+from matplotlib.widgets import Slider
+from mpl_toolkits.mplot3d import Axes3D
+
+fig = plt.figure(figsize = plt.figaspect(0.5))
+fig.subplots_adjust(hspace = 0.5, left = 0.2)
+fig.subplots_adjust(bottom = 0.224)
+ax1 = fig.add_subplot(2,2,2, projection = "3d")                                                                    #ax1 = 3D luminosity graph                                                   
+ax2 = fig.add_subplot(2,2,1)                                                                                       #ax2 = evap time 2D graph 
+plt.subplots_adjust(bottom=0.25)                                                                                   #ax3 = 2D luminosity graph  
+ax3 = fig.add_subplot(2,2,3)
+ax3.set_ylabel('Luminosity/ W')
+ax3.set_xlabel('Mass/ kg')
+ax3.set_title('Luminosity/ mass graph')           
+
+def enter_min_mass_number():                                                                                       #allows the user to enter the minimum value for the mass
+    try:
+        x_min_mass = float(input("Enter the smallest mass (in kg) you wish to display: "))
+        while x_min_mass <= 0.0:
+            print("The mass can't be zero or less!")
+            x_min_mass = float(input("Enter the smallest mass (in kg) you wish to display: "))
+        
+    except ValueError or TypeError:
+        print("Please enter a float!")
+        enter_min_mass_number()                                                                                    #if an invalid input is thrown, the subroutine is recalled
+    finally:
+        def enter_max_mass_number(x_min_mass):                                                                     #allows a max mass to be entered by the user 
+            try:
+                x_max_mass = float(input("Enter the largest mass (in kg) you wish to display: "))
+                while x_max_mass <= x_min_mass:
+                    print("The largest mass has to be greater than the smallest - please enter a larger value!")
+                    x_max_mass = float(input("Enter the largest mass (in kg) you wish to display: "))
+            except ValueError or TypeError:
+                print("Please enter a float!")
+                enter_max_mass_number(x_min_mass)
+            finally:
+                def evap_time_mass(x_min_mass, x_max_mass):                                                        #an evap time is calculated and plotted
+                    x = np.linspace(x_min_mass, x_max_mass, 10000)
+                    y = (5120 * pi * G**2 * (x)**3)/(sigma* hbar * c**4)
+                    ax2.plot(x,y)
+                    ax2.set_xlabel('Mass/ kg')
+                    ax2.set_ylabel('Evaporation time/ s')
+                    ax2.set_title('Evaporation time/ mass graph')
+                evap_time_mass(x_min_mass, x_max_mass)
+                
+                def luminosityPlot_mass(x_min_mass, x_max_mass):                                                   #2D and 3D luminosity is calculated in this subroutine
+                    a = 0
+                    x = np.linspace(x_min_mass, x_max_mass, 10000)
+                    y = 4*pi * (((2*G*x)/c**2) * (1 + (1-a**2)**0.5)**2) * sigma * (((hbar* c**3)/(8*pi*G*x*k))**4)
+                    plt.subplots_adjust(bottom=0.25)
+                    p = ax3.plot(x,y)
+                    ax3.semilogy()                                                                                 #log scale for y axis is created
+                    
+                    ax3.set_ylabel('Luminosity/ W')
+                    ax3.set_xlabel('Mass/ kg')
+                    ax3.set_title('Luminosity/ mass graph')
+                    
+                    ax_slide = plt.axes([0.25, 0.1, 0.2, 0.03])                                                    #slider is created                                                                   
+                    a_factor = Slider(ax_slide, 'Spin parameter',
+                                      -1, 1, valinit=0, valstep=0.001)
+
+                    x_3D = np.linspace(x_min_mass, x_max_mass, 10000)                                              #3D luminosity is plotted in the following lines
+                    y_3D = np.linspace(4*pi * (((2*G*x_min_mass)/c**2) * (1 + (1-a**2)**0.5)**2) * sigma * (((hbar* c**3)/(8*pi*G*x_min_mass*k))**4),4*pi * (((2*G*x_max_mass)/c**2) * (1 + (1-a**2)**0.5)**2) * sigma * (((hbar* c**3)/(8*pi*G*x_max_mass*k))**4), 10000) 
+                    
+                    
+                    ax1.set_xlabel('Mass/ kg')
+                    ax1.set_ylabel('Luminosity/ W')
+                    ax1.set_zlabel('Spin')
+                    ax1.set_title('Luminosity/ mass/ spin graph')
+                    ax1.plot(x_3D,y_3D,a)
+    
+                    def update(val):                                                                               #if the slider value is changed, then luminosity is recalculated and plotted
+                        current_a = a_factor.val                                                                                       
+                        x = np.linspace(x_min_mass, x_max_mass, 10000)
+                        y = (4*pi * (((2*G*x)/c**2) * (1 + (1-(current_a**2))**0.5)**2) * sigma * (((hbar* c**3)/(8*pi*G*x*k))**4))
+                        ax3.clear()
+                        ax3.semilogy()
+                        
+                        ax3.set_ylabel('Luminosity/ W')
+                        ax3.set_xlabel('Mass/ kg')
+                        ax3.set_title('Luminosity/ mass graph')
+                        ax3.plot(x,y)
+
+                        x_3D = np.linspace(x_min_mass, x_max_mass, 10000)
+                        y_3D = np.linspace(4*pi * (((2*G*x_min_mass)/c**2) * (1 + (1-(current_a**2))**0.5)**2) * sigma * (((hbar* c**3)/(8*pi*G*x_min_mass*k))**4),4*pi * (((2*G*x_max_mass)/c**2) * (1 + (1-a**2)**0.5)**2) * sigma * (((hbar* c**3)/(8*pi*G*x_max_mass*k))**4), 10000) 
+                    
+                        ax1.clear()
+                        
+                        ax1.set_xlabel('Mass/ kg')
+                        ax1.set_ylabel('Luminosity/ W')
+                        ax1.set_zlabel('Spin')
+                        ax1.set_title('Luminosity/ mass/ spin graph')
+                        ax1.plot(x_3D,y_3D,current_a)
+                        
+
+                    a_factor.on_changed(update)
+                    plt.show()                                                                                     #IMPORTANT - if plt.show(() is missing then the updated graphs won't be shown
+                luminosityPlot_mass(x_min_mass, x_max_mass)                                                        #calls the luminosityPlot subroutine
+        
+        enter_max_mass_number(x_min_mass)                                                                          
+
+def enter_min_radius_number():                                                                                     #virtually the same as the subroutine for the mass, with the only difference being that radius
+    try:                                                                                                           #is converted to mass, before the calculations for evap time and luminosity
+        x_min_radius = float(input("Enter the smallest radius (in metres) you wish to display: "))
+        while x_min_radius <= 0.0:
+            print("The radius can't be zero or less!")
+            x_min_radius = float(input("Enter the smallest radius (in metres) you wish to display: "))
+        
+    except ValueError or TypeError:
+        print("Please enter a float!")
+        enter_min_radius_number()
+    finally:
+        def enter_max_radius_number(x_min_radius):
+            try:
+                x_max_radius = float(input("Enter the largest radius (in metres) you wish to display: "))
+                while x_max_radius <= x_min_radius:
+                    print("The largest radius has to be greater than the smallest - please enter a larger value!")
+                    x_max_radius = float(input("Enter the largest radius (in metres) you wish to display: "))
+            except ValueError or TypeError:
+                print("Please enter a float!")
+                enter_max_radius_number(x_min_radius)
+            finally:
+                def evap_time_radius(x_min_radius, x_max_radius):
+                    min_radius_to_mass = (x_min_radius * c**2)/(2*G)
+                    max_radius_to_mass = (x_max_radius * c**2)/(2*G)
+                    x = np.linspace(min_radius_to_mass, max_radius_to_mass, 10000)
+                    y = (5120 * pi * G**2 * (x)**3)/(sigma* hbar * c**4)
+                    ax2.plot(x,y)
+                    ax2.set_xlabel('Mass/ kg')
+                    ax2.set_ylabel('Evaporation time/ s')
+                    ax2.set_title('Evaporation time/ mass graph')
+                evap_time_radius(x_min_radius, x_max_radius)
+                
+                def luminosityPlot_radius(x_min_radius, x_max_radius):
+                    a = 0
+                    min_radius_to_mass = (x_min_radius * c**2)/(2*G)
+                    max_radius_to_mass = (x_max_radius * c**2)/(2*G)
+                    x = np.linspace(min_radius_to_mass, max_radius_to_mass, 10000)
+                    y = 4*pi * (((2*G*x)/c**2) * (1 + (1-a**2)**0.5)**2) * sigma * (((hbar* c**3)/(8*pi*G*x*k))**4) 
+                    plt.subplots_adjust(bottom=0.25)
+                    
+                    p = ax3.plot(x,y)
+                    ax3.semilogy()
+                    ax3.set_ylabel('Luminosity/ W')
+                    ax3.set_xlabel('Mass/ kg')
+                    ax3.set_title('Luminosity/ mass graph')
+                    
+                    ax_slide = plt.axes([0.25, 0.1, 0.2, 0.03])                                                                    
+                    a_factor = Slider(ax_slide, 'Spin parameter',
+                                      -1, 1, valinit=0, valstep=0.001)
+
+                    x_3D = np.linspace(min_radius_to_mass, min_radius_to_mass, 10000)
+                    y_3D = np.linspace(4*pi * (((2*G*min_radius_to_mass)/c**2) * (1 + (1-a**2)**0.5)**2) * sigma * (((hbar* c**3)/(8*pi*G*min_radius_to_mass*k))**4), 4*pi * (((2*G*max_radius_to_mass)/c**2) * (1 + (1-a**2)**0.5)**2) * sigma * (((hbar* c**3)/(8*pi*G*max_radius_to_mass*k))**4), 10000) 
+                    
+                    
+                    ax1.set_xlabel('Mass/ kg')
+                    ax1.set_ylabel('Luminosity/ W')
+                    ax1.set_zlabel('Spin')
+                    ax1.set_title('Luminosity/ mass/ spin graph')
+                    ax1.plot(x_3D,y_3D,a)
+                    
+    
+                    def update(val):
+                        current_a = a_factor.val                                                                                       
+                        x = np.linspace(min_radius_to_mass, max_radius_to_mass, 10000)
+                        y = (4*pi * (((2*G*x)/c**2) * (1 + (1-(current_a**2))**0.5)**2) * sigma * (((hbar* c**3)/(8*pi*G*x*k))**4))
+                        ax3.clear()
+                        ax3.semilogy()
+                        ax3.set_ylabel('Luminosity/ W')
+                        ax3.set_xlabel('Mass/ kg')
+                        ax3.set_title('Luminosity/ mass graph')
+                        ax3.plot(x,y)
+
+                        x_3D = np.linspace(min_radius_to_mass, min_radius_to_mass, 10000)
+                        y_3D = np.linspace(4*pi * (((2*G*min_radius_to_mass)/c**2) * (1 + (1-(current_a**2))**0.5)**2) * sigma * (((hbar* c**3)/(8*pi*G*min_radius_to_mass*k))**4),4*pi * (((2*G*max_radius_to_mass)/c**2) * (1 + (1-a**2)**0.5)**2) * sigma * (((hbar* c**3)/(8*pi*G*max_radius_to_mass*k))**4), 10000) 
+                    
+                        ax1.clear()
+                        
+                        ax1.set_xlabel('Mass/ kg')
+                        ax1.set_ylabel('Luminosity/ W')
+                        ax1.set_zlabel('Spin')
+                        ax1.set_title('Luminosity/ mass/ spin graph')
+                        ax1.plot(x_3D,y_3D,current_a)
+                        
+
+                    a_factor.on_changed(update)
+                    plt.show()
+                luminosityPlot_radius(x_min_radius, x_max_radius)
+        
+        enter_max_radius_number(x_min_radius)
+
+m_rChoice = input("Enter 'm' for mass or enter 'r' for radius: ")                                                  #allows the user to choose between mass and radius input                                                
+m_rChoice.lower()
+while m_rChoice != "m" and m_rChoice != "r":
+    m_rChoice = input("Please enter 'm' or 'r': ")
+    m_rChoice.lower()
+    if m_rChoice == "m" or m_rChoice == "r":
+        break
+
+
+if m_rChoice == "r":
+    enter_min_radius_number()                                                                                      #if radius, then radius subroutines are called; and vice versa
+    
+elif m_rChoice == "m":
+    enter_min_mass_number()
+
+
+  
+
+plt.show()
